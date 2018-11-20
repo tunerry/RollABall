@@ -1,14 +1,23 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System;
+using System.IO;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour {
 
     public static GameManager Instance;
     public GameObject coin;
     public Animator animator;
+    public Text txt_time;
+    
     public int count;
     public bool isBegin;
+    public bool isEnd;
+
+    private float begin_time;
+    private List<string> scoreList = new List<string>();
 
     private void Awake()
     {
@@ -20,6 +29,38 @@ public class GameManager : MonoBehaviour {
         InitCoin();
         count = 0;
         isBegin = false;
+        isEnd = false;
+    }
+
+    private void Update()
+    {
+        if (isEnd)
+        {
+            isEnd = false;
+            Rank();
+        }
+
+        if (!isBegin)
+            return;
+        txt_time.text = Math.Round(Time.time - begin_time, 2).ToString();
+        if (count >= 12)
+        {
+            count = 0;
+            isEnd = true;
+            isBegin = false;
+        }
+    }
+
+    public void Begin()
+    {
+        animator.SetTrigger("out");
+        isBegin = true;
+        begin_time = Time.time;
+    }
+
+    public void Exit()
+    {
+        Application.Quit();
     }
 
     private void InitCoin()
@@ -73,14 +114,24 @@ public class GameManager : MonoBehaviour {
         }
     }
 
-    public void Begin()
+    private void Rank()
     {
-        animator.SetTrigger("out");
-        isBegin = true;
-    }
-
-    public void Exit()
-    {
-        Application.Quit();
+        string curPath = Environment.CurrentDirectory + @"\rank.txt";
+        if (!File.Exists(curPath))
+            File.Create(curPath);
+        string[] strs = File.ReadAllLines(curPath);
+        scoreList = new List<string>(strs)
+        {
+            txt_time.text
+        };
+        scoreList.Sort();
+        if (scoreList.Count > 10)
+        {
+            scoreList.Remove(scoreList[scoreList.Count - 1]);
+        }
+        foreach (string str in scoreList)
+            Debug.Log(str);
+        strs = scoreList.ToArray();
+        File.WriteAllLines(curPath, strs);
     }
 }
