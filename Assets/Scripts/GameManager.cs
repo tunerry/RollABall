@@ -4,6 +4,7 @@ using System;
 using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour {
 
@@ -11,7 +12,7 @@ public class GameManager : MonoBehaviour {
     public GameObject coin;
     public Animator animator;
     public Text txt_time;
-    
+    public Text txt_rank;
     public int count;
     public bool isBegin;
     public bool isEnd;
@@ -37,6 +38,7 @@ public class GameManager : MonoBehaviour {
         if (isEnd)
         {
             isEnd = false;
+            animator.SetTrigger("end");
             Rank();
         }
 
@@ -56,6 +58,12 @@ public class GameManager : MonoBehaviour {
         animator.SetTrigger("out");
         isBegin = true;
         begin_time = Time.time;
+    }
+
+    public void Retry()
+    {
+        animator.SetTrigger("retry");
+        SceneManager.LoadScene(0);
     }
 
     public void Exit()
@@ -120,17 +128,27 @@ public class GameManager : MonoBehaviour {
         if (!File.Exists(curPath))
             File.Create(curPath);
         string[] strs = File.ReadAllLines(curPath);
-        scoreList = new List<string>(strs)
+        scoreList = new List<string>(strs);
+        scoreList.Add(txt_time.text);
+        List<float> intscore = new List<float>();
+        foreach(string str in scoreList)
+            intscore.Add(Convert.ToSingle(str));
+        intscore.Sort();
+        if (intscore.Count > 10)
+            intscore.Remove(intscore[intscore.Count - 1]);
+        int num = 1;
+        txt_rank.text = "";
+        foreach (float str in intscore)
         {
-            txt_time.text
-        };
-        scoreList.Sort();
-        if (scoreList.Count > 10)
-        {
-            scoreList.Remove(scoreList[scoreList.Count - 1]);
+            if (num % 10 != num)
+                txt_rank.text += "      " + num.ToString() + "                                  " + str.ToString() + "\n";
+            else
+                txt_rank.text += "      " + num.ToString() + "                                   " + str.ToString() + "\n";
+            num += 1;
         }
-        foreach (string str in scoreList)
-            Debug.Log(str);
+        scoreList.Clear();
+        foreach (float ff in intscore)
+            scoreList.Add(ff.ToString());
         strs = scoreList.ToArray();
         File.WriteAllLines(curPath, strs);
     }
